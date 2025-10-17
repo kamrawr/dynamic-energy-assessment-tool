@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oregon Dynamic Energy Assessment Tool - Advanced</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .data-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .data-info strong {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Oregon Energy Assessment</h1>
+        <p class="subtitle">Advanced Tool with Real Oregon Data Integration</p>
+        
+        <div class="data-info">
+            <strong>📊 Data Sources:</strong> Energy Trust of Oregon Incentives Database, Oregon AMI Data, County Demographics
+            <br><br>
+            <div style="font-size: 0.85em; font-style: italic; color: #666; margin: 10px 0;">
+                <strong>Disclaimer:</strong> For informational purposes only. Programs may only apply in Energy Trust utility territories through qualified partners. <a href="https://energytrust.org" target="_blank" style="color: #667eea;">Visit energytrust.org</a> for current eligibility and requirements.
+            </div>
+            <button type="button" id="loadSampleBtn" style="background: #27ae60; margin-top: 10px; font-size: 14px; padding: 8px 16px;">
+                📋 Load Sample: Low-Income High-Need Home
+            </button>
+        </div>
+        
+        <form method="post" action="/assess">
+            <!-- Quick Income Option -->
+            <div class="form-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="use_simple_income" name="use_simple_income" value="true" style="width: auto;">
+                    <label for="use_simple_income" style="font-weight: 400; display: inline;">⚡ Quick Option: Skip detailed demographics and use simple income classification</label>
+                </div>
+            </div>
+            
+            <!-- Simple Income Classification (shown when checkbox is checked) -->
+            <div class="form-group" id="simple_income_section" style="display: none;">
+                <label for="simple_income_bracket">Household Income Level:</label>
+                <select id="simple_income_bracket" name="simple_income_bracket">
+                    <option value="">Select Income Level</option>
+                    <option value="low_income">Low Income (May qualify for no-cost programs)</option>
+                    <option value="moderate_income">Moderate Income (May qualify for reduced-cost programs)</option>
+                    <option value="higher_income">Higher Income (Standard programs and tax credits)</option>
+                </select>
+            </div>
+            
+            <!-- Detailed Demographics (hidden when simple option is checked) -->
+            <div id="detailed_demographics_section">
+                <div class="form-group">
+                    <label for="county">County:</label>
+                    <select id="county" name="county">
+                        <option value="">Select County (Optional)</option>
+                        <option value="Multnomah">Multnomah</option>
+                        <option value="Washington">Washington</option>
+                        <option value="Clackamas">Clackamas</option>
+                        <option value="Marion">Marion</option>
+                        <option value="Jackson">Jackson</option>
+                        <option value="Lane">Lane</option>
+                        <option value="Deschutes">Deschutes</option>
+                        <option value="Yamhill">Yamhill</option>
+                        <option value="Douglas">Douglas</option>
+                        <option value="Linn">Linn</option>
+                        <option value="Benton">Benton</option>
+                        <option value="Polk">Polk</option>
+                        <option value="Josephine">Josephine</option>
+                        <option value="Klamath">Klamath</option>
+                        <option value="Umatilla">Umatilla</option>
+                        <option value="Hood River">Hood River</option>
+                        <option value="Crook">Crook</option>
+                        <option value="Jefferson">Jefferson</option>
+                        <option value="Coos">Coos</option>
+                        <option value="Curry">Curry</option>
+                        <option value="Baker">Baker</option>
+                        <option value="Grant">Grant</option>
+                        <option value="Harney">Harney</option>
+                        <option value="Lake">Lake</option>
+                        <option value="Malheur">Malheur</option>
+                        <option value="Morrow">Morrow</option>
+                        <option value="Sherman">Sherman</option>
+                        <option value="Gilliam">Gilliam</option>
+                        <option value="Union">Union</option>
+                        <option value="Wallowa">Wallowa</option>
+                        <option value="Wasco">Wasco</option>
+                        <option value="Wheeler">Wheeler</option>
+                        <option value="Columbia">Columbia</option>
+                        <option value="Tillamook">Tillamook</option>
+                        <option value="Lincoln">Lincoln</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="household_size">Household Size:</label>
+                    <select id="household_size" name="household_size">
+                        <option value="">Select (Optional)</option>
+                        <option value="1">1 person</option>
+                        <option value="2">2 people</option>
+                        <option value="3">3 people</option>
+                        <option value="4">4 people</option>
+                        <option value="5">5 people</option>
+                        <option value="6">6 people</option>
+                        <option value="7">7 people</option>
+                        <option value="8">8+ people</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="annual_income">Annual Household Income:</label>
+                    <select id="annual_income" name="annual_income">
+                        <option value="">Select Range (Optional)</option>
+                        <option value="under_25k">Under $25,000</option>
+                        <option value="25k_50k">$25,000 - $50,000</option>
+                        <option value="50k_75k">$50,000 - $75,000</option>
+                        <option value="75k_100k">$75,000 - $100,000</option>
+                        <option value="over_100k">Over $100,000</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Property Basics -->
+            <div class="form-group">
+                <label for="housing_type">Housing Type:</label>
+                <select id="housing_type" name="housing_type">
+                    <option value="">N/A</option>
+                    <option value="single_family">Single Family</option>
+                    <option value="multi_family">Multi Family</option>
+                    <option value="townhome">Townhome</option>
+                    <option value="manufactured">Manufactured</option>
+                    <option value="condo">Condo</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="square_footage">Home Square Footage:</label>
+                <input type="number" id="square_footage" name="square_footage" min="500" max="10000" placeholder="e.g., 1500">
+            </div>
+            
+            <!-- Utility Bills for Savings Calculations -->
+            <div class="form-group">
+                <label for="summer_electric_bill">Average Summer Electric Bill:</label>
+                <input type="number" id="summer_electric_bill" name="summer_electric_bill" min="0" max="1000" placeholder="e.g., 180" step="0.01">
+                <small style="color: #666; font-size: 0.9em;">Enter your highest monthly electric bill (July-September) in dollars</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="winter_electric_bill">Average Winter Electric Bill:</label>
+                <input type="number" id="winter_electric_bill" name="winter_electric_bill" min="0" max="1000" placeholder="e.g., 250" step="0.01">
+                <small style="color: #666; font-size: 0.9em;">Enter your highest monthly electric bill (December-February) in dollars</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="gas_bill">Average Monthly Gas Bill (if applicable):</label>
+                <input type="number" id="gas_bill" name="gas_bill" min="0" max="500" placeholder="e.g., 85" step="0.01">
+                <small style="color: #666; font-size: 0.9em;">Enter average monthly natural gas bill in dollars (leave blank if no gas)</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="foundation_type">Foundation Type:</label>
+                <select id="foundation_type" name="foundation_type">
+                    <option value="">N/A</option>
+                    <option value="slab">Slab</option>
+                    <option value="crawlspace">Crawlspace</option>
+                    <option value="basement_unfinished">Basement Unfinished</option>
+                    <option value="basement_finished">Basement Finished</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="roof_condition">Roof Condition:</label>
+                <select id="roof_condition" name="roof_condition">
+                    <option value="">N/A</option>
+                    <option value="poor">Poor</option>
+                    <option value="fair">Fair</option>
+                    <option value="good">Good</option>
+                    <option value="excellent">Excellent</option>
+                </select>
+            </div>
+            
+            <!-- Envelope & Insulation -->
+            <div class="form-group">
+                <label for="attic_insulation">Attic Insulation:</label>
+                <select id="attic_insulation" name="attic_insulation">
+                    <option value="">N/A</option>
+                    <option value="none">None</option>
+                    <option value="poor">Poor</option>
+                    <option value="fair">Fair</option>
+                    <option value="good">Good</option>
+                    <option value="excellent">Excellent</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="attic_sqft_section" style="display: none;">
+                <label for="attic_square_footage">Attic Square Footage (for insulation pricing):</label>
+                <input type="number" id="attic_square_footage" name="attic_square_footage" min="0" max="5000" placeholder="e.g., 1200">
+            </div>
+            
+            <div class="form-group">
+                <label for="wall_insulation">Wall Insulation:</label>
+                <select id="wall_insulation" name="wall_insulation">
+                    <option value="">N/A</option>
+                    <option value="none">None</option>
+                    <option value="partial">Partial</option>
+                    <option value="full">Full</option>
+                    <option value="excellent">Excellent</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="wall_sqft_section" style="display: none;">
+                <label for="wall_square_footage">Exterior Wall Square Footage (for insulation pricing):</label>
+                <input type="number" id="wall_square_footage" name="wall_square_footage" min="0" max="10000" placeholder="e.g., 2000">
+            </div>
+            
+            <div class="form-group">
+                <label for="crawlspace_insulation">Crawlspace Insulation:</label>
+                <select id="crawlspace_insulation" name="crawlspace_insulation">
+                    <option value="">N/A</option>
+                    <option value="none">None</option>
+                    <option value="poor">Poor</option>
+                    <option value="fair">Fair</option>
+                    <option value="good">Good</option>
+                    <option value="excellent">Excellent</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ductwork_condition">Ductwork Condition:</label>
+                <select id="ductwork_condition" name="ductwork_condition">
+                    <option value="">N/A</option>
+                    <option value="no_ducts">No Ducts</option>
+                    <option value="poor">Poor</option>
+                    <option value="fair">Fair</option>
+                    <option value="good">Good</option>
+                    <option value="excellent">Excellent</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="window_type">Window Type:</label>
+                <select id="window_type" name="window_type">
+                    <option value="">N/A</option>
+                    <option value="single_pane">Single Pane</option>
+                    <option value="double_pane_old">Double Pane (Old)</option>
+                    <option value="double_pane_new">Double Pane (New)</option>
+                    <option value="triple_pane">Triple Pane</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="door_sealing">Door Sealing:</label>
+                <select id="door_sealing" name="door_sealing">
+                    <option value="">N/A</option>
+                    <option value="poor">Poor</option>
+                    <option value="fair">Fair</option>
+                    <option value="good">Good</option>
+                    <option value="excellent">Excellent</option>
+                </select>
+            </div>
+            
+            <!-- HVAC Systems -->
+            <div class="form-group">
+                <label for="heating_type">Primary Heating Type:</label>
+                <select id="heating_type" name="heating_type">
+                    <option value="">N/A</option>
+                    <option value="gas_furnace">Gas Furnace</option>
+                    <option value="oil_furnace">Oil Furnace</option>
+                    <option value="electric_resistance">Electric Resistance</option>
+                    <option value="heat_pump">Heat Pump</option>
+                    <option value="boiler_radiators">Boiler/Radiators</option>
+                    <option value="wood_pellet">Wood/Pellet</option>
+                    <option value="none">None</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="hvac_sizing_section" style="display: none;">
+                <label for="conditioned_square_footage">Conditioned Square Footage (for HVAC sizing):</label>
+                <input type="number" id="conditioned_square_footage" name="conditioned_square_footage" min="0" max="10000" placeholder="e.g., 1400">
+            </div>
+            
+            <div class="form-group" id="room_count_section" style="display: none;">
+                <label for="rooms_needing_hvac">Number of Rooms Needing Heat Pump Heads/Units:</label>
+                <input type="number" id="rooms_needing_hvac" name="rooms_needing_hvac" min="1" max="20" placeholder="e.g., 3">
+            </div>
+            
+            <div class="form-group">
+                <label for="cooling_type">Cooling Type:</label>
+                <select id="cooling_type" name="cooling_type">
+                    <option value="">N/A</option>
+                    <option value="central_ac">Central AC</option>
+                    <option value="window_units">Window Units</option>
+                    <option value="mini_split">Mini Split</option>
+                    <option value="evaporative_cooler">Evaporative Cooler</option>
+                    <option value="none">None</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="heating_system_age">Heating System Age:</label>
+                <select id="heating_system_age" name="heating_system_age">
+                    <option value="">N/A</option>
+                    <option value="0-5">0-5 years</option>
+                    <option value="5-10">5-10 years</option>
+                    <option value="10-15">10-15 years</option>
+                    <option value="15-20">15-20 years</option>
+                    <option value="20+">20+ years</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="cooling_system_age">Cooling System Age:</label>
+                <select id="cooling_system_age" name="cooling_system_age">
+                    <option value="">N/A</option>
+                    <option value="0-5">0-5 years</option>
+                    <option value="5-10">5-10 years</option>
+                    <option value="10-15">10-15 years</option>
+                    <option value="15-20">15-20 years</option>
+                    <option value="20+">20+ years</option>
+                </select>
+            </div>
+            
+            <!-- Health & Safety -->
+            <div class="form-group">
+                <label>Health & Safety Factors (check all that apply):</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="combustion_appliances" name="health_safety_factors" value="combustion_appliances">
+                        <label for="combustion_appliances">Combustion Appliances Present</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="moisture_issues" name="health_safety_factors" value="moisture_issues">
+                        <label for="moisture_issues">Moisture/Water Issues</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="mold_visible" name="health_safety_factors" value="mold_visible">
+                        <label for="mold_visible">Visible Mold</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="asbestos_suspected" name="health_safety_factors" value="asbestos_suspected">
+                        <label for="asbestos_suspected">Suspected Asbestos</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="lead_paint_suspected" name="health_safety_factors" value="lead_paint_suspected">
+                        <label for="lead_paint_suspected">Suspected Lead Paint</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="no_health_safety_issues" name="health_safety_factors" value="none">
+                        <label for="no_health_safety_issues">No Known Health/Safety Issues</label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit">🔍 Generate Assessment Report</button>
+        </form>
+        
+        <script>
+            // Toggle between simple and detailed income sections
+            document.getElementById('use_simple_income').addEventListener('change', function(){
+                const simpleSection = document.getElementById('simple_income_section');
+                const detailedSection = document.getElementById('detailed_demographics_section');
+                
+                if (this.checked) {
+                    simpleSection.style.display = 'block';
+                    detailedSection.style.display = 'none';
+                    // Clear detailed section values when using simple option
+                    document.getElementById('county').value = '';
+                    document.getElementById('household_size').value = '';
+                    document.getElementById('annual_income').value = '';
+                } else {
+                    simpleSection.style.display = 'none';
+                    detailedSection.style.display = 'block';
+                    // Clear simple section value when using detailed option
+                    document.getElementById('simple_income_bracket').value = '';
+                }
+            });
+            
+            // Show/hide sizing fields based on assessment responses
+            function toggleSizingFields() {
+                // Show attic square footage if attic insulation needs work
+                const atticInsulation = document.getElementById('attic_insulation').value;
+                const atticSqftSection = document.getElementById('attic_sqft_section');
+                if (atticInsulation && ['none', 'poor', 'fair'].includes(atticInsulation)) {
+                    atticSqftSection.style.display = 'block';
+                } else {
+                    atticSqftSection.style.display = 'none';
+                }
+                
+                // Show wall square footage if wall insulation needs work
+                const wallInsulation = document.getElementById('wall_insulation').value;
+                const wallSqftSection = document.getElementById('wall_sqft_section');
+                if (wallInsulation && ['none', 'partial'].includes(wallInsulation)) {
+                    wallSqftSection.style.display = 'block';
+                } else {
+                    wallSqftSection.style.display = 'none';
+                }
+                
+                // Show HVAC sizing if heating system needs replacement
+                const heatingType = document.getElementById('heating_type').value;
+                const hvacSizingSection = document.getElementById('hvac_sizing_section');
+                const roomCountSection = document.getElementById('room_count_section');
+                
+                if (heatingType && ['electric_resistance', 'none'].includes(heatingType)) {
+                    hvacSizingSection.style.display = 'block';
+                    roomCountSection.style.display = 'block';
+                } else {
+                    hvacSizingSection.style.display = 'none';
+                    roomCountSection.style.display = 'none';
+                }
+            }
+            
+            // Add event listeners for assessment fields
+            document.getElementById('attic_insulation').addEventListener('change', toggleSizingFields);
+            document.getElementById('wall_insulation').addEventListener('change', toggleSizingFields);
+            document.getElementById('heating_type').addEventListener('change', toggleSizingFields);
+            
+            // Load sample assessment data
+            document.getElementById('loadSampleBtn').addEventListener('click', function() {
+                // Use simple income option
+                document.getElementById('use_simple_income').checked = true;
+                document.getElementById('simple_income_section').style.display = 'block';
+                document.getElementById('detailed_demographics_section').style.display = 'none';
+                document.getElementById('simple_income_bracket').value = 'low_income';
+                
+                // High-need property characteristics
+                document.getElementById('housing_type').value = 'single_family';
+                document.getElementById('square_footage').value = '1200';
+                document.getElementById('foundation_type').value = 'crawlspace';
+                document.getElementById('roof_condition').value = 'fair';
+                
+                // High utility bills due to inefficient systems
+                document.getElementById('summer_electric_bill').value = '180';
+                document.getElementById('winter_electric_bill').value = '320';
+                document.getElementById('gas_bill').value = '0';  // All electric home
+                
+                // Poor insulation everywhere
+                document.getElementById('attic_insulation').value = 'poor';
+                document.getElementById('wall_insulation').value = 'none';
+                document.getElementById('crawlspace_insulation').value = 'none';
+                
+                // Old inefficient systems
+                document.getElementById('heating_type').value = 'electric_resistance';
+                document.getElementById('cooling_type').value = 'none';
+                document.getElementById('heating_system_age').value = '20+';
+                document.getElementById('ductwork_condition').value = 'poor';
+                
+                // Inefficient windows and doors
+                document.getElementById('window_type').value = 'single_pane';
+                document.getElementById('door_sealing').value = 'poor';
+                
+                // Health & safety issues
+                document.getElementById('combustion_appliances').checked = true;
+                document.getElementById('moisture_issues').checked = true;
+                document.getElementById('no_health_safety_issues').checked = false;
+                
+                // Trigger the sizing fields to show
+                toggleSizingFields();
+                
+                // Fill in sizing data
+                setTimeout(function() {
+                    document.getElementById('attic_square_footage').value = '1200';
+                    document.getElementById('wall_square_footage').value = '2400';
+                    document.getElementById('conditioned_square_footage').value = '1200';
+                    document.getElementById('rooms_needing_hvac').value = '4';
+                }, 100);
+                
+                alert('✅ Loaded sample assessment for a low-income, high-need home!\n\n' +
+                      '🏠 1,200 sq ft single-family home\n' +
+                      '❄️ Electric resistance heating (expensive!)\n' +
+                      '🌡️ No cooling system\n' +
+                      '🏚️ Poor/no insulation throughout\n' +
+                      '🪟 Single-pane windows\n' +
+                      '⚠️ Health & safety concerns\n\n' +
+                      'This home should qualify for Community Partner Funding (no-cost programs)!');
+            });
+
+            // Handle conflicting health & safety selections
+            document.getElementById('no_health_safety_issues').addEventListener('change', function(){
+                if (this.checked) {
+                    ['combustion_appliances', 'moisture_issues', 'mold_visible', 'asbestos_suspected', 'lead_paint_suspected'].forEach(id => {
+                        document.getElementById(id).checked = false;
+                    });
+                }
+            });
+            
+            ['combustion_appliances', 'moisture_issues', 'mold_visible', 'asbestos_suspected', 'lead_paint_suspected'].forEach(id => {
+                document.getElementById(id).addEventListener('change', function(){
+                    if (this.checked) {
+                        document.getElementById('no_health_safety_issues').checked = false;
+                    }
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>
