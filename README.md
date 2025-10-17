@@ -1,6 +1,8 @@
-# 🏠 Home Energy Assessment Tool
+# 🏠 Home Energy Assessment Tool (Standalone Version)
 
-**A comprehensive, standalone web-based tool for conducting home energy assessments and generating personalized energy efficiency recommendations.**
+**A simple, standalone web-based tool for conducting home energy assessments and generating personalized energy efficiency recommendations.**
+
+> 🔧 **Need detailed sizing calculations and precise incentive calculations?** Check out our [**Advanced Tool with Sizing & Incentive Calculations**](https://github.com/kamrawr/oregon-energy-assessment-advanced) for detailed square footage inputs, HVAC sizing, and accurate Energy Trust of Oregon incentive calculations.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5)
@@ -11,12 +13,13 @@
 
 - 🌐 **Zero Setup Required** - Single HTML file, works offline
 - 📱 **Mobile Responsive** - Works on desktop, tablet, and mobile
-- 🏗️ **Comprehensive Assessment** - Housing type, foundation, envelope, HVAC, health & safety
+- 🏗️ **Basic Assessment** - Housing type, foundation, envelope, HVAC, health & safety
 - 🎯 **Smart Recommendations** - Heat pump suggestions, ductless options, N/A field handling
 - 📊 **Visual Reports** - Real-time status dashboard with color-coded indicators
 - 📄 **Downloadable Reports** - Professional HTML reports with print/PDF capability
 - ⚡ **Instant Analysis** - No server required, all processing in-browser
 - 🔧 **Multi-Select Options** - Choose multiple health & safety factors
+- 🔗 **Links to Advanced Tool** - Easy access to detailed sizing and incentive calculations
 
 ## 🚀 Quick Start
 
@@ -34,6 +37,24 @@ git clone https://github.com/kamrawr/dynamic-energy-assessment-tool.git
 cd dynamic-energy-assessment-tool
 open standalone_assessment.html
 ```
+
+## 🔧 Two Tool Versions
+
+### 📋 This Tool (Standalone)
+**Best for:** Quick assessments, basic recommendations, no detailed calculations needed
+- Simple form inputs
+- General energy efficiency recommendations  
+- No sizing calculations
+- Generic incentive information
+- Works completely offline
+
+### 🔬 [Advanced Tool](https://github.com/kamrawr/oregon-energy-assessment-advanced)
+**Best for:** Detailed assessments, accurate cost/incentive calculations, professional use
+- Square footage inputs for accurate sizing
+- HVAC load calculations
+- Energy Trust of Oregon incentive amounts
+- Net cost and payback period calculations
+- Dynamic form fields based on responses
 
 ## 🎯 How to Use
 
@@ -115,9 +136,15 @@ open standalone_assessment.html
 - **Offline Capable**: Works without internet connection
 - **Mobile Optimized**: Responsive design for all screen sizes
 
-## 📚 Advanced Features
+## 📚 Need More Advanced Features?
 
-For developers and power users interested in the full Flask web application version with server-side processing, database integration, and advanced features, see the [`flask-version`](../../tree/flask-version) branch.
+This standalone tool focuses on simplicity and offline capability. For detailed sizing calculations, accurate incentive amounts, and professional-grade assessments, check out our [**Advanced Energy Assessment Tool**](https://github.com/kamrawr/oregon-energy-assessment-advanced) which includes:
+
+- Square footage inputs for accurate sizing
+- HVAC load calculations and equipment sizing
+- Precise Energy Trust of Oregon incentive calculations
+- Net cost and payback period analysis
+- Dynamic form fields that adapt to user responses
 
 ## 🤝 Contributing
 
