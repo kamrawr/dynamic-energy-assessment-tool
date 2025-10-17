@@ -1,0 +1,11 @@
+id,category,measure,description,cost_low,cost_high,savings_low,savings_high,diy_friendly,priority_base,prerequisites,rebates_federal,rebates_state,rebates_utility
+INS_001,insulation,Attic Insulation Upgrade,Add or upgrade attic insulation to R-49 or higher,1500,3000,200,400,False,1,None,Tax Credit 30%,Varies by state,Utility rebates available
+INS_002,insulation,Wall Insulation,Dense-pack cellulose or spray foam wall insulation,3000,6000,300,600,False,2,Energy audit recommended,Tax Credit 30%,Varies by state,Utility rebates available
+INS_003,insulation,Basement/Crawl Insulation,Insulate basement walls or crawlspace,1000,2500,150,300,False,3,Moisture control,Tax Credit 30%,Varies by state,Utility rebates available
+HVAC_001,hvac,Heat Pump Installation,High-efficiency air source heat pump,8000,15000,800,1500,False,1,Electrical upgrade may be needed,Tax Credit 30%,State rebates vary,Utility rebates $500-2000
+HVAC_002,hvac,Duct Sealing and Insulation,Seal and insulate ductwork,800,1500,150,300,True,3,None,Tax Credit 30%,Limited,Utility rebates available
+HVAC_003,hvac,Smart Thermostat,Programmable smart thermostat,200,400,50,150,True,4,Wi-Fi required,Limited,Limited,Utility rebates $50-100
+WIN_001,windows,Window Replacement,ENERGY STAR certified windows,6000,12000,400,800,False,3,None,Tax Credit 30%,State rebates vary,Limited
+WIN_002,windows,Storm Windows,Interior or exterior storm windows,2000,4000,200,400,False,4,None,Limited,State rebates vary,Limited
+SEAL_001,air_sealing,Air Sealing,Comprehensive air sealing package,500,1200,100,250,False,2,Combustion safety test,Tax Credit 30%,Varies by state,Utility rebates available
+WATER_001,water_heating,Water Heater Heat Pump,Electric heat pump water heater,1200,2500,200,400,False,3,Electrical requirements,Tax Credit 30%,State rebates vary,Utility rebates $500-1000

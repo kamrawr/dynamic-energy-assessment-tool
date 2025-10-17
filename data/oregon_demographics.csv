@@ -1,0 +1,41 @@
+region,county,units_est,buildings_est,residents_est,low_income_share_est,low_income_households_est
+Metro,Multnomah,74030,1481,140657,50%,37015
+Metro,Washington,37688,754,71607,50%,18844
+Metro,Clackamas,22882,458,43476,50%,11441
+Valley,Marion,6300,126,11970,45%,2835
+Valley,Lane (IOU clip),3600,72,6840,45%,1620
+Valley,Linn,3240,65,6156,45%,1458
+Valley,Benton,2160,43,4104,45%,972
+Valley,Polk,1440,29,2736,45%,648
+Valley,Yamhill,1260,25,2394,45%,567
+Southern,Jackson,5400,108,10260,55%,2970
+Southern,Josephine,2160,43,4104,55%,1188
+Southern,Douglas,2160,43,4104,55%,1188
+Southern,Klamath,864,17,1642,55%,475
+Southern,Lake,216,4,410,55%,119
+Central,Deschutes,6080,122,11552,40%,2432
+Central,Crook,760,15,1444,40%,304
+Central,Jefferson,760,15,1444,40%,304
+Coast,Lincoln,1890,38,3591,55%,1040
+Coast,Coos,1512,30,2873,55%,832
+Coast,Clatsop,1080,22,2052,55%,594
+Coast,Tillamook,648,13,1231,55%,356
+Coast,Curry,270,5,513,55%,148
+Eastern,Umatilla,720,14,1368,55%,396
+Eastern,Morrow,288,6,547,55%,158
+Eastern,Wasco,432,9,821,55%,238
+Eastern,Hood River,432,9,821,55%,238
+Eastern,Union,360,7,684,55%,198
+Eastern,Baker,360,7,684,55%,198
+Eastern,Malheur,360,7,684,55%,198
+Eastern,Wallowa,180,4,342,55%,99
+Eastern,Grant,144,3,274,55%,79
+Eastern,Harney,144,3,274,55%,79
+Eastern,Gilliam,90,2,171,55%,50
+Eastern,Sherman,90,2,171,55%,50
+Central,— region total —,7600,152,14440,40%,3040
+Coast,— region total —,5400,108,10260,55%,2970
+Eastern,— region total —,3600,73,6841,55%,1981
+Metro,— region total —,134600,2693,255740,50%,67300
+Southern,— region total —,10800,215,20520,55%,5940
+Valley,— region total —,18000,360,34200,45%,8100
