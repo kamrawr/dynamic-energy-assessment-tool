@@ -74,20 +74,33 @@ measures_database = pd.DataFrame()
 income_brackets = {}
 regional_data = {}
 
-def load_measures_database(file_path: str = "data/measures_template.csv"):
-    """Load the measures/recommendations database"""
+def load_measures_database():
+    """Load the Energy Trust measures database as primary source"""
     global measures_database
-    try:
-        if Path(file_path).exists():
-            measures_database = pd.read_csv(file_path)
-            logger.info(f"Loaded {len(measures_database)} measures from database")
-        else:
-            logger.warning(f"Measures database not found at {file_path}")
-            # Create sample data
-            create_sample_measures_database()
-    except Exception as e:
-        logger.error(f"Error loading measures database: {e}")
-        create_sample_measures_database()
+    
+    # Try to load Energy Trust measures first (most comprehensive)
+    energy_trust_path = Path("data/energy_trust_measures.csv")
+    if energy_trust_path.exists():
+        try:
+            measures_database = pd.read_csv(energy_trust_path)
+            logger.info(f"Loaded {len(measures_database)} Energy Trust measures from database")
+            return
+        except Exception as e:
+            logger.error(f"Error loading Energy Trust measures: {e}")
+    
+    # Fallback to template measures
+    template_path = Path("data/measures_template.csv")
+    if template_path.exists():
+        try:
+            measures_database = pd.read_csv(template_path)
+            logger.info(f"Loaded {len(measures_database)} template measures from database")
+            return
+        except Exception as e:
+            logger.error(f"Error loading template measures: {e}")
+    
+    # Last resort - create sample data
+    logger.warning("No measures database found, creating sample data")
+    create_sample_measures_database()
 
 def load_oregon_ami_data():
     """Load Oregon AMI data for accurate income classification"""
@@ -118,6 +131,58 @@ def load_oregon_ami_data():
             
     except Exception as e:
         logger.error(f"Error loading Oregon AMI data: {e}")
+
+def load_incentives_database():
+    """Load Oregon incentives database for real rebate matching"""
+    global regional_data
+    try:
+        incentives_path = Path("data/oregon_incentives.csv")
+        if incentives_path.exists():
+            incentives_df = pd.read_csv(incentives_path)
+            regional_data['oregon_incentives'] = incentives_df.to_dict('records')
+            logger.info(f"Loaded {len(incentives_df)} Oregon incentive programs")
+        else:
+            logger.warning("Oregon incentives database not found")
+    except Exception as e:
+        logger.error(f"Error loading Oregon incentives database: {e}")
+
+def match_incentives_to_measure(measure_category: str, county: str, income_bracket: str) -> List[Dict]:
+    """Match available incentives to a specific measure based on location and income"""
+    matched_incentives = []
+    
+    if not regional_data.get('oregon_incentives'):
+        return matched_incentives
+    
+    for incentive in regional_data['oregon_incentives']:
+        # Check if incentive applies to this measure category
+        if (incentive['measure_category'] == 'all' or 
+            incentive['measure_category'] == measure_category):
+            
+            # Check income eligibility
+            income_req = incentive['income_requirement']
+            if (income_req == 'All incomes' or
+                (income_req == '≤60% AMI' and income_bracket in ['very_low_income', 'low_income']) or
+                (income_req == '≤80% AMI' and income_bracket in ['very_low_income', 'low_income', 'moderate_income'])):
+                
+                # Check county/territory restrictions
+                county_restriction = incentive['county_restriction']
+                if (county_restriction == 'All Oregon counties' or
+                    county_restriction == 'All counties' or
+                    county.lower() in county_restriction.lower()):
+                    
+                    matched_incentives.append({
+                        'program_name': incentive['program_name'],
+                        'program_type': incentive['program_type'],
+                        'administrator': incentive['administrator'],
+                        'incentive_amount': incentive['incentive_amount'],
+                        'incentive_type': incentive['incentive_type'],
+                        'application_required': incentive['application_required'],
+                        'contact_info': incentive['contact_info'],
+                        'website': incentive['website'],
+                        'notes': incentive['notes']
+                    })
+    
+    return matched_incentives
 
 def create_sample_measures_database():
     """Create sample measures database for testing"""
@@ -217,17 +282,185 @@ def get_targeted_recommendations(assessment: AssessmentData) -> List[Recommendat
                     diy_friendly=False
                 ))
     
-    # Insulation recommendations
-    if assessment.attic_insulation in ["none", "poor", "fair"]:
-        recs = get_measure_recommendations("insulation", "attic", income_bracket, assessment)
-        recommendations.extend(recs)
-    
-    # HVAC recommendations with heat pump logic
-    if assessment.heating_type == "electric_resistance" or assessment.cooling_type == "none":
-        recs = get_measure_recommendations("hvac", "heat_pump", income_bracket, assessment)
-        recommendations.extend(recs)
+    # Use Energy Trust measures if available, otherwise fall back to generic recommendations
+    if not measures_database.empty and 'program' in measures_database.columns:
+        # Using Energy Trust measures database
+        energy_trust_recs = get_energy_trust_recommendations(assessment, income_bracket)
+        recommendations.extend(energy_trust_recs)
+    else:
+        # Fall back to generic recommendations
+        # Insulation recommendations
+        if assessment.attic_insulation in ["none", "poor", "fair"]:
+            recs = get_measure_recommendations("insulation", "attic", income_bracket, assessment)
+            recommendations.extend(recs)
+        
+        # HVAC recommendations with heat pump logic
+        if assessment.heating_type == "electric_resistance" or assessment.cooling_type == "none":
+            recs = get_measure_recommendations("hvac", "heat_pump", income_bracket, assessment)
+            recommendations.extend(recs)
     
     return sorted(recommendations, key=lambda x: x.priority)
+
+def get_energy_trust_recommendations(assessment: AssessmentData, income_bracket: str) -> List[Recommendation]:
+    """Generate recommendations using Energy Trust measures database"""
+    recommendations = []
+    
+    if measures_database.empty:
+        return recommendations
+    
+    county = assessment.county or 'Unknown'
+    
+    # Determine program eligibility based on income
+    if income_bracket in ['very_low_income', 'low_income']:
+        eligible_programs = ['Community Partner Funding', 'Savings Within Reach', 'Standard']
+    elif income_bracket == 'moderate_income':
+        eligible_programs = ['Savings Within Reach', 'Standard']
+    else:
+        eligible_programs = ['Standard']
+    
+    # Heat pump recommendations
+    if (assessment.heating_type == 'electric_resistance' or 
+        assessment.cooling_type == 'none' or 
+        assessment.heating_system_age in ['15-20', '20+']):
+        
+        heat_pump_measures = measures_database[
+            measures_database['measure'].str.contains('Heat Pump', na=False) &
+            measures_database['program'].isin(eligible_programs)
+        ]
+        
+        for _, measure in heat_pump_measures.head(3).iterrows():  # Limit to top 3
+            recommendations.append(create_energy_trust_recommendation(measure, assessment, income_bracket))
+    
+    # Insulation recommendations
+    if assessment.attic_insulation in ['none', 'poor', 'fair']:
+        insulation_measures = measures_database[
+            measures_database['measure'].str.contains('Attic Insulation', na=False) &
+            measures_database['program'].isin(eligible_programs)
+        ]
+        
+        for _, measure in insulation_measures.head(2).iterrows():
+            recommendations.append(create_energy_trust_recommendation(measure, assessment, income_bracket))
+    
+    if assessment.wall_insulation in ['none', 'partial']:
+        wall_measures = measures_database[
+            measures_database['measure'].str.contains('Wall Insulation', na=False) &
+            measures_database['program'].isin(eligible_programs)
+        ]
+        
+        for _, measure in wall_measures.head(1).iterrows():
+            recommendations.append(create_energy_trust_recommendation(measure, assessment, income_bracket))
+    
+    # Window recommendations
+    if assessment.window_type == 'single_pane':
+        window_measures = measures_database[
+            measures_database['measure'].str.contains('Windows', na=False) &
+            measures_database['program'].isin(eligible_programs)
+        ]
+        
+        for _, measure in window_measures.head(1).iterrows():
+            recommendations.append(create_energy_trust_recommendation(measure, assessment, income_bracket))
+    
+    return recommendations
+
+def create_energy_trust_recommendation(measure: pd.Series, assessment: AssessmentData, income_bracket: str) -> Recommendation:
+    """Create a recommendation object from Energy Trust measure data"""
+    
+    # Calculate effective cost based on program type
+    expected_cost = measure.get('expected_unit_price', 0) or 0
+    incentive_value = measure.get('incentive_value', 0) or 0
+    
+    # Parse incentive value if it's a string with $ 
+    if isinstance(incentive_value, str) and '$' in str(incentive_value):
+        try:
+            incentive_value = float(str(incentive_value).replace('$', '').replace(',', ''))
+        except:
+            incentive_value = 0
+    
+    # Estimate customer cost
+    if measure['program'] == 'Community Partner Funding':
+        customer_cost_low = 0  # No customer payment
+        customer_cost_high = 0
+    elif measure['program'] == 'Savings Within Reach':
+        customer_cost_low = max(0, expected_cost - incentive_value) * 0.3  # Reduced cost for income-qualified
+        customer_cost_high = max(0, expected_cost - incentive_value) * 0.5
+    else:  # Standard
+        customer_cost_low = max(0, expected_cost - incentive_value)
+        customer_cost_high = expected_cost
+    
+    # Determine savings (rough estimates based on measure type)
+    annual_savings = estimate_annual_savings(measure['measure'], expected_cost)
+    
+    return Recommendation(
+        id=f"ET_{measure.name}",
+        category=categorize_energy_trust_measure(measure['measure']),
+        priority=get_measure_priority(measure['measure'], measure['program']),
+        title=f"{measure['measure']} ({measure['program']})",
+        description=f"{measure['requirements_summary']} - Incentive: ${incentive_value}",
+        estimated_cost_low=customer_cost_low,
+        estimated_cost_high=customer_cost_high,
+        annual_savings_low=annual_savings * 0.8,
+        annual_savings_high=annual_savings * 1.2,
+        payback_period=customer_cost_low / annual_savings if annual_savings > 0 else 0,
+        rebates_available=[f"{measure['program']}: ${incentive_value}"],
+        financing_options=get_financing_options(measure['program'], income_bracket),
+        diy_friendly=False,  # Energy Trust measures require contractors
+        contractor_required=True
+    )
+
+def categorize_energy_trust_measure(measure_name: str) -> str:
+    """Categorize Energy Trust measures"""
+    if 'Heat Pump' in measure_name:
+        return 'hvac'
+    elif 'Insulation' in measure_name:
+        return 'insulation'
+    elif 'Windows' in measure_name:
+        return 'windows'
+    elif 'Thermostat' in measure_name:
+        return 'controls'
+    elif 'Water Heater' in measure_name:
+        return 'water_heating'
+    else:
+        return 'other'
+
+def get_measure_priority(measure_name: str, program: str) -> int:
+    """Assign priority based on measure type and program"""
+    if program == 'Community Partner Funding':
+        return 1  # Highest priority - no cost
+    elif 'Heat Pump' in measure_name:
+        return 1  # High impact
+    elif 'Attic Insulation' in measure_name:
+        return 2  # High ROI
+    elif 'Wall Insulation' in measure_name:
+        return 2
+    else:
+        return 3
+
+def estimate_annual_savings(measure_name: str, cost: float) -> float:
+    """Estimate annual energy savings based on measure type"""
+    if 'Ductless Heat Pump' in measure_name:
+        return cost * 0.15  # ~15% of cost as annual savings
+    elif 'Ducted Heat Pump' in measure_name:
+        return cost * 0.12
+    elif 'Attic Insulation' in measure_name:
+        return cost * 0.20  # Higher ROI for insulation
+    elif 'Wall Insulation' in measure_name:
+        return cost * 0.18
+    elif 'Windows' in measure_name:
+        return cost * 0.08
+    else:
+        return cost * 0.10  # Default 10%
+
+def get_financing_options(program: str, income_bracket: str) -> List[str]:
+    """Get financing options based on program and income"""
+    if program == 'Community Partner Funding':
+        return ['No-cost program', 'Grant funding']
+    elif program == 'Savings Within Reach':
+        return ['Income-qualified financing', 'On-bill financing', 'PACE financing']
+    else:
+        if income_bracket in ['very_low_income', 'low_income']:
+            return ['Energy Trust rebates', 'Federal tax credits', 'On-bill financing']
+        else:
+            return ['Energy Trust rebates', 'Federal tax credits', 'Traditional financing']
 
 def get_measure_recommendations(category: str, measure_type: str, income_bracket: str, assessment: AssessmentData) -> List[Recommendation]:
     """Get specific recommendations from measures database"""
@@ -263,6 +496,15 @@ def get_measure_recommendations(category: str, measure_type: str, income_bracket
             financing_options = ["Traditional loans", "HELOC", "Cash purchase"]
             cost_multiplier = 1.0  # Full cost
         
+        # Get real incentives for this measure
+        county = assessment.county or 'Unknown'
+        real_incentives = match_incentives_to_measure(measure['category'], county, income_bracket)
+        
+        # Use real incentives if available, otherwise fall back to generic ones
+        if real_incentives:
+            rebates = [inc['program_name'] + ' (' + inc['incentive_amount'] + ')' for inc in real_incentives]
+            financing_options = list(set([inc['program_type'] for inc in real_incentives if inc['program_type'] in ['Grant', 'Rebate', 'Tax Credit']]))
+        
         recommendations.append(Recommendation(
             id=measure['id'],
             category=measure['category'],
@@ -287,6 +529,7 @@ async def startup_event():
     """Initialize the application"""
     load_measures_database()
     load_oregon_ami_data()
+    load_incentives_database()
     # Create necessary directories
     Path("data").mkdir(exist_ok=True)
     Path("uploads").mkdir(exist_ok=True)
